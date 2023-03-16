@@ -52,7 +52,7 @@ namespace SecurityPackageTest
             RailFence algorithm = new RailFence();
             string cipher = algorithm.Encrypt(mainPlain1, mainKey2);
             // Add x's or not
-            Assert.IsTrue(cipher.Equals(mainCipher2, StringComparison.InvariantCultureIgnoreCase) 
+            Assert.IsTrue(cipher.Equals(mainCipher2, StringComparison.InvariantCultureIgnoreCase)
                        || cipher.Equals(mainCipher3, StringComparison.InvariantCultureIgnoreCase));
         }
 
@@ -74,7 +74,7 @@ namespace SecurityPackageTest
             RailFence algorithm = new RailFence();
             int key = algorithm.Analyse(mainPlain1, mainCipher2);
             int key2 = algorithm.Analyse(mainPlain1, mainCipher3);
-            Assert.IsTrue(mainKey2 ==  key || mainKey2 == key2);
+            Assert.IsTrue(mainKey2 == key || mainKey2 == key2);
         }
 
 
@@ -103,3 +103,4 @@ namespace SecurityPackageTest
         }
     }
 }
+

@@ -36,18 +36,18 @@ namespace SecurityLibrary
         public string get_text(char[,] Matrix, int byCol, int byRow)
         {
             string text = "";
-
+            char c = '\0';
             for (int i = 0; i < Matrix.GetLength(byCol); i++)
             {
                 for (int j = 0; j < Matrix.GetLength(byRow); j++)
                 {
                     if (byCol == 1)
-                        if (Matrix[j, i] != '\0')
+                        if (Matrix[j, i] != c)
                         {
                             text += String.Join("", Matrix[j, i]);
                         }
                     if (byRow == 1)
-                        if (Matrix[i, j] != '\0')
+                        if (Matrix[i, j] != c)
                         {
                             text += String.Join("", Matrix[i, j]);
                         }
@@ -58,11 +58,12 @@ namespace SecurityLibrary
         }
         public int Analyse(string plainText, string cipherText)
         {
-            for (int i = 1; i < Math.Max(plainText.Length, cipherText.Length); i++)
+            for (int j = 1; j < Math.Max(plainText.Length, cipherText.Length); j++)
             {
-                if (cipherText.ToUpper() == Encrypt(plainText, i).ToUpper())
+                bool check = cipherText.ToUpper() == Encrypt(plainText, j).ToUpper();
+                if (check)
                 {
-                    return i;
+                    return j;
                 }
             }
             return 1000;
