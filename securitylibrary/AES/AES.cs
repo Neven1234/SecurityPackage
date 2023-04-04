@@ -46,9 +46,17 @@ namespace SecurityLibrary.AES
             {
                 plainText_Matrix = SubBytes(plainText_Matrix);
                 plainText_Matrix = ShiftRow(plainText_Matrix, "enc");
+                //maxx col
+                //round key
+                plainText_Matrix = XOR(plainText_Matrix, key_Matrix);
+
                 i++;
             }
-            return plainText;
+            plainText_Matrix = SubBytes(plainText_Matrix);
+            plainText_Matrix = ShiftRow(plainText_Matrix, "enc");
+            //round key
+            plainText_Matrix = XOR(plainText_Matrix, key_Matrix);
+            return plainText_Matrix.ToString();
 
         }
         public string[,] Convert_To_Matrix(string str)
