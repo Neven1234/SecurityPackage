@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.XPath;
@@ -43,7 +45,7 @@ namespace SecurityLibrary.AES
             while(i<9)
             {
                 plainText_Matrix = SubBytes(plainText_Matrix);
-                plainText_Matrix = ShiftRow(plainText_Matrix);
+                plainText_Matrix = ShiftRow(plainText_Matrix, "enc");
                 i++;
             }
             return plainText;
@@ -108,11 +110,46 @@ namespace SecurityLibrary.AES
             return Matrix;
 
         }
-        public string[,] ShiftRow(string[,] str)
+        public string[,] ShiftRow(string[,] str,string flag)
         {
             string[,] Matrix = new string[4, 4];
+            int[] arr = { 0, Matrix.GetLength(0)};
+            int counter=0;
+            if (flag == "enc")
+            {
+                 counter = arr[0];
 
-            return Matrix;
+            }
+            else if(flag=="dec")
+            {
+                 counter = arr[1];
+            }
+            for(int i=0;i<Matrix.GetLength(0);i++)
+            {
+                for (int j = 0; j < Matrix.GetLength(1);j++)
+                {
+                    if(flag=="enc")
+                    {
+                        Matrix[i, j] = str[i, (j + counter) % 4];
+
+                    }
+                    if (flag=="dec")
+                    {
+                        Matrix[i, j] = str[i, (j + counter) % 4];
+
+                    }
+                }
+                if (flag == "enc")
+                {
+                    counter++;
+
+                }
+                if (flag == "dec")
+                {
+                    counter--;
+                }
+            }
+                      return Matrix;
 
         }
     }
