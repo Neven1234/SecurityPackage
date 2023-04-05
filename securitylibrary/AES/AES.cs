@@ -30,6 +30,67 @@ namespace SecurityLibrary.AES
                                                   { "70", "3E", "B5", "66", "48", "03", "F6", "0E", "61", "35", "57", "B9", "86", "C1", "1D", "9E" },
                                                   { "E1", "F8", "98", "11", "69", "D9", "8E", "94", "9B", "1E", "87", "E9", "CE", "55", "28", "DF" },
                                                   { "8C", "A1", "89", "0D", "BF", "E6", "42", "68", "41", "99", "2D", "0F", "B0", "54", "BB", "16" } };
+
+
+        string[,] mixColumnMatrix = new string[4, 4] { {"02", "03", "01", "01"},
+                                                       {"01", "02", "03", "01"},
+                                                       {"01", "01", "02", "03"},
+                                                       {"03", "01", "01", "02"}};
+
+        //i'm just testing something by this matix, i'm gonna delete it later
+        string[,] test = new string[4, 4] { {"87", "f2", "4d", "97"},
+                                            {"6e", "02", "03", "01"},
+                                            {"46", "01", "02", "03"},
+                                            {"a6", "01", "01", "02"}};
+
+        private string[,] mixColumns(string[,] matrix)
+        {
+            string[,] mixedMatrix = new string[4, 4];
+            int res = 0;
+            int xor;
+            string hexa;
+            for (int i = 0; i < 4; i++) //column in plane
+            {
+                for (int j = 0; j < 4; j++) //row in mixer
+                {
+                    for (int k = 0; k < 4; k++) // index of element in column plane and row mixed
+                    {
+                        hexa = matrix[k, i];
+                        if (Convert.ToInt32(mixColumnMatrix[j, k], 16) >= 2)
+                        {
+                            int shifted = Convert.ToInt32(matrix[k, i], 16) << 1; //270
+                            hexa = shifted.ToString("X");//10e
+                            if (hexa[0] == '1' && hexa.Length >= 3)
+                            {
+                                hexa = hexa.Remove(0, 1);
+                                xor = Convert.ToInt32(hexa, 16) ^ Convert.ToInt32("1b", 16); //21(xor)
+                                hexa = xor.ToString("X");//15
+                            }
+                            if (Convert.ToInt32(mixColumnMatrix[j, k], 16) == 3)
+                            {
+                                xor = Convert.ToInt32(hexa, 16) ^ Convert.ToInt32(matrix[k, i], 16);
+                                hexa = xor.ToString("X");
+                            }
+                        }
+                        if (res == 0)
+                        {
+                            res = Convert.ToInt32(hexa, 16);
+                        }
+                        else
+                        {
+                            res = res ^ Convert.ToInt32(hexa, 16);
+                        }
+
+                    }
+                    mixedMatrix[i, j] = res.ToString("X");
+                    res = 0;
+
+                }
+            }
+            return mixedMatrix;
+        }
+
+
         public override string Decrypt(string cipherText, string key)
         {
             throw new NotImplementedException();
@@ -162,3 +223,4 @@ namespace SecurityLibrary.AES
         }
     }
 }
+
