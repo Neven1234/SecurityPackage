@@ -30,9 +30,40 @@ namespace SecurityLibrary.AES
                                                   { "70", "3E", "B5", "66", "48", "03", "F6", "0E", "61", "35", "57", "B9", "86", "C1", "1D", "9E" },
                                                   { "E1", "F8", "98", "11", "69", "D9", "8E", "94", "9B", "1E", "87", "E9", "CE", "55", "28", "DF" },
                                                   { "8C", "A1", "89", "0D", "BF", "E6", "42", "68", "41", "99", "2D", "0F", "B0", "54", "BB", "16" } };
+
+            /*string[,] sboxInverse = new string[16, 16] { { "52", "09", "6a", "d5", "30", "36", "a5", "38", "bf", "40", "a3", "9e", "81", "f3", "d7", "fb" },
+                                                            { "7c", "e3", "39", "82", "9b", "2f", "ff", "87", "34", "8e", "43", "44", "c4", "de", "e9", "cb" },
+                                                            { "54", "7b", "94", "32","a6" , "c2", "23", "3d", "ee", "4c", "95","0b" ,"42" , "fa", "c3", "4e" },
+                                                            { "08", "2e", "a1", "66", "28", "d9", "24", "b2", "76", "5b", "a2", "49", "6d", "8b", "d1", "25" },
+                                                            { "72", "f8", "f6", "64", "86", "68", "98", "16", "d4", "a4", "5c", "cc", "5d", "65", "b6", "92" },
+                                                            { "6c", "70", "48", "50", "fd", "ed", "b9", "da", "5e", "15", "46", "57", "a7", "8d", "9d", "84" },
+                                                            { "90", "d8", "ab", "00", "8c", "bc", "d3", "0a", "f7", "e4", "58", "05", "b8", "b3", "45", "06" },
+                                                            { "d0", "2c", "1e", "8f", "ca", "3f", "0f", "02", "c1", "af", "bd", "03", "01", "13", "8a", "6b "},
+                                                            { "3a", "91", "11", "41", "4f", "67", "dc", "ea", "97", "f2", "cf", "ce", "f0", "b4", "e6", "73" },
+                                                            { "96", "ac", "74", "22", "e7", "ad", "35", "85", "e2", "f9", "37", "e8", "1c", "75", "df", "6e" },
+                                                            { "47", "f1", "1a", "71", "1d", "29", "c5", "89", "6f", "b7", "62", "0e", "aa", "18", "be", "1b" },
+                                                            { "fc", "56", "3e", "4b", "c6", "d2", "79", "20", "9a", "db", "c0", "fe", "78", "cd", "5a", "f4 "},
+                                                            { "1f", "dd", "a8", "33", "88", "07", "c7", "31", "b1", "12", "10", "59", "27", "80", "ec", "5f" },
+                                                            { "60", "51", "7f", "a9", "19", "b5", "4a", "0d", "2d", "e5", "7a", "9f", "93", "c9", "9c", "ef" },
+                                                            { "a0", "e0", "3b", "4d", "ae", "2a", "f5", "b0", "c8", "eb", "bb", "3c", "83", "53","99" , "61" },
+                                                            { "17", "2b", "04", "7e", "ba", "77", "d6", "26", "e1", "69", "14", "63", "55", "21", "0c", "7d" } };*/
         public override string Decrypt(string cipherText, string key)
         {
-            throw new NotImplementedException();
+            string[,] cipherText_Matrix = Convert_To_Matrix(cipherText);
+            string[,] key_Matrix = Convert_To_Matrix(key);
+            cipherText_Matrix = XOR(cipherText_Matrix, key_Matrix);
+            int i = 0;
+            while (i > 9)
+            {
+                cipherText_Matrix = ShiftRow(cipherText_Matrix, "dec");
+                cipherText_Matrix = SubBytes(cipherText_Matrix, "dec");
+                cipherText_Matrix = XOR(cipherText_Matrix, key_Matrix);
+
+                i++;
+            }
+            cipherText_Matrix = ShiftRow(cipherText_Matrix, "dec");
+            cipherText_Matrix = SubBytes(cipherText_Matrix, "dec");
+            return cipherText_Matrix.ToString();
         }
 
         public override string Encrypt(string plainText, string key)
@@ -44,7 +75,7 @@ namespace SecurityLibrary.AES
             int i = 0;
             while(i<9)
             {
-                plainText_Matrix = SubBytes(plainText_Matrix);
+                plainText_Matrix = SubBytes(plainText_Matrix,"enc");
                 plainText_Matrix = ShiftRow(plainText_Matrix, "enc");
                 //maxx col
                 //round key
@@ -52,7 +83,7 @@ namespace SecurityLibrary.AES
 
                 i++;
             }
-            plainText_Matrix = SubBytes(plainText_Matrix);
+            plainText_Matrix = SubBytes(plainText_Matrix,"enc");
             plainText_Matrix = ShiftRow(plainText_Matrix, "enc");
             //round key
             plainText_Matrix = XOR(plainText_Matrix, key_Matrix);
@@ -69,7 +100,7 @@ namespace SecurityLibrary.AES
                 for(int j=0;j<Matrix.GetLength(1);j++)
                 {
                     char[] chars = { str[c1], str[c1+1] };
-                     two_char = new string(chars);
+                    two_char = new string(chars);
                     Matrix[j, i] = two_char;
                     if (c1 >= str.Length)
                         break;
@@ -102,22 +133,43 @@ namespace SecurityLibrary.AES
             return Matrix;
 
         }
-        public string[,] SubBytes(string[,] str)
+        public string[,] SubBytes(string[,] str,string flag)
         {
             string[,] Matrix = new string[4, 4];
+
             for (int i = 0; i < Matrix.GetLength(0); i++)
             {
                 for (int j = 0; j < Matrix.GetLength(1); j++)
 
                 {
-                    int row = Convert.ToInt32(str[i, j][0].ToString(), 16);
-                    int col = Convert.ToInt32(str[i, j][1].ToString(), 16);
-                    Matrix[i,j]= SBOX[row, col];
+                    if (flag == "enc")
+                    {
+                        int row = Convert.ToInt32(str[i, j][0].ToString(), 16);
+                        int col = Convert.ToInt32(str[i, j][1].ToString(), 16);
+                        Matrix[i, j] = SBOX[row, col];
+                    }
+                    else if(flag=="dec")
+                    {
+                        str[i, j] = str[i, j].ToLower();
+                        for (int s1=0;s1<SBOX.GetLength(0);s1++)
+                        {
+                            for(int s2=0;s2<SBOX.GetLength(1);s2++)
+                            {
+                                if (str[i, j].Equals( SBOX[s1,s2].ToLower()))
+                                {
+                                    string part1 = Convert.ToString(s1, 16);
+                                    string part2 = Convert.ToString(s2, 16);
+                                    Matrix[i,j]=part1 + part2;
+                                }
+                            }
+                        }
+                    }
                 }
             }
             return Matrix;
 
         }
+       
         public string[,] ShiftRow(string[,] str,string flag)
         {
             string[,] Matrix = new string[4, 4];
@@ -136,16 +188,10 @@ namespace SecurityLibrary.AES
             {
                 for (int j = 0; j < Matrix.GetLength(1);j++)
                 {
-                    if(flag=="enc")
-                    {
-                        Matrix[i, j] = str[i, (j + counter) % 4];
+                    int t = (j + counter) % 4;
+                        Matrix[i, j] = str[i, t];
 
-                    }
-                    if (flag=="dec")
-                    {
-                        Matrix[i, j] = str[i, (j + counter) % 4];
-
-                    }
+                    
                 }
                 if (flag == "enc")
                 {
