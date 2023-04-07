@@ -130,7 +130,21 @@ namespace SecurityLibrary.AES
 
         public override string Decrypt(string cipherText, string key)
         {
-            throw new NotImplementedException();
+            string[,] cipherText_Matrix = Convert_To_Matrix(cipherText);
+            string[,] key_Matrix = Convert_To_Matrix(key);
+            cipherText_Matrix = XOR(cipherText_Matrix, key_Matrix);
+            int i = 0;
+            while (i > 9)
+            {
+                cipherText_Matrix = ShiftRow(cipherText_Matrix, "dec");
+                cipherText_Matrix = SubBytes(cipherText_Matrix, "dec");
+                cipherText_Matrix = XOR(cipherText_Matrix, key_Matrix);
+
+                i++;
+            }
+            cipherText_Matrix = ShiftRow(cipherText_Matrix, "dec");
+            cipherText_Matrix = SubBytes(cipherText_Matrix, "dec");
+            return cipherText_Matrix.ToString();
         }
 
         public override string Encrypt(string plainText, string key)
@@ -142,7 +156,7 @@ namespace SecurityLibrary.AES
             int i = 0;
             while(i<9)
             {
-                plainText_Matrix = SubBytes(plainText_Matrix);
+                plainText_Matrix = SubBytes(plainText_Matrix,"enc");
                 plainText_Matrix = ShiftRow(plainText_Matrix, "enc");
                 //maxx col
                 plainText_Matrix = mixColumns(plainText_Matrix);
@@ -153,7 +167,7 @@ namespace SecurityLibrary.AES
 
                 i++;
             }
-            plainText_Matrix = SubBytes(plainText_Matrix);
+            plainText_Matrix = SubBytes(plainText_Matrix,"enc");
             plainText_Matrix = ShiftRow(plainText_Matrix, "enc");
             //round key
             key_Matrix = roundKey(key_Matrix, 9);
@@ -184,7 +198,7 @@ namespace SecurityLibrary.AES
                 for(int j=0;j<Matrix.GetLength(1);j++)
                 {
                     char[] chars = { str[c1], str[c1+1] };
-                     two_char = new string(chars);
+                    two_char = new string(chars);
                     Matrix[j, i] = two_char;
                     if (c1 >= str.Length)
                         break;
@@ -216,21 +230,42 @@ namespace SecurityLibrary.AES
             return Matrix;
 
         }
-        public string[,] SubBytes(string[,] str)
+        public string[,] SubBytes(string[,] str,string flag)
         {
             string[,] Matrix = new string[4, 4];
+
             for (int i = 0; i < Matrix.GetLength(0); i++)
             {
                 for (int j = 0; j < Matrix.GetLength(1); j++)
                 {
-                    int row = Convert.ToInt32(str[i, j][0].ToString(), 16);
-                    int col = Convert.ToInt32(str[i, j][1].ToString(), 16);
-                    Matrix[i,j]= SBOX[row, col];
+                    if (flag == "enc")
+                    {
+                        int row = Convert.ToInt32(str[i, j][0].ToString(), 16);
+                        int col = Convert.ToInt32(str[i, j][1].ToString(), 16);
+                        Matrix[i, j] = SBOX[row, col];
+                    }
+                    else if(flag=="dec")
+                    {
+                        str[i, j] = str[i, j].ToLower();
+                        for (int s1=0;s1<SBOX.GetLength(0);s1++)
+                        {
+                            for(int s2=0;s2<SBOX.GetLength(1);s2++)
+                            {
+                                if (str[i, j].Equals( SBOX[s1,s2].ToLower()))
+                                {
+                                    string part1 = Convert.ToString(s1, 16);
+                                    string part2 = Convert.ToString(s2, 16);
+                                    Matrix[i,j]=part1 + part2;
+                                }
+                            }
+                        }
+                    }
                 }
             }
             return Matrix;
 
         }
+       
         public string[,] ShiftRow(string[,] str,string flag)
         {
             string[,] Matrix = new string[4, 4];
@@ -249,16 +284,10 @@ namespace SecurityLibrary.AES
             {
                 for (int j = 0; j < Matrix.GetLength(1);j++)
                 {
-                    if(flag=="enc")
-                    {
-                        Matrix[i, j] = str[i, (j + counter) % 4];
+                    int t = (j + counter) % 4;
+                        Matrix[i, j] = str[i, t];
 
-                    }
-                    if (flag=="dec")
-                    {
-                        Matrix[i, j] = str[i, (j + counter) % 4];
-
-                    }
+                    
                 }
                 if (flag == "enc")
                 {
