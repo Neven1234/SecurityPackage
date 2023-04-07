@@ -37,11 +37,11 @@ namespace SecurityLibrary.AES
                                                        {"01", "01", "02", "03"},
                                                        {"03", "01", "01", "02"}};
 
-        //i'm just testing something by this matix, i'm gonna delete it later
-        string[,] test = new string[4, 4] { {"87", "f2", "4d", "97"},
-                                            {"6e", "02", "03", "01"},
-                                            {"46", "01", "02", "03"},
-                                            {"a6", "01", "01", "02"}};
+
+        string[,] rCon = new string[,] { {"01", "02", "04", "08", "10", "20", "40", "80", "1b", "36"},
+                                         {"00", "00", "00", "00", "00", "00", "00", "00", "00", "00"},
+                                         {"00", "00", "00", "00", "00", "00", "00", "00", "00", "00"},
+                                         {"00", "00", "00", "00", "00", "00", "00", "00", "00", "00"},};
 
         private string[,] mixColumns(string[,] matrix)
         {
@@ -80,16 +80,53 @@ namespace SecurityLibrary.AES
                         {
                             res = res ^ Convert.ToInt32(hexa, 16);
                         }
-
                     }
-                    mixedMatrix[i, j] = res.ToString("X");
+                    mixedMatrix[j, i] = res.ToString("X");
                     res = 0;
-
                 }
             }
             return mixedMatrix;
         }
+        
+        //[row, column]
+        private string[,] roundKey(string[,] key, int roundNum)
+        {
+            string[,] newKey = new string[4, 4];
+            for (int j = 0; j < 4; j++)
+            {
+                newKey[(j + 3) % 4, 0] = key[j, 3];
+            }
 
+            for (int j = 0; j < 4; j++)
+            {
+                if(newKey[j, 0].Length < 2)
+                {
+                    newKey[j, 0] = SBOX[0, Convert.ToInt32(newKey[j, 0][0].ToString(), 16)];
+                }
+                else
+                {
+                    int row = Convert.ToInt32(newKey[j, 0][0].ToString(), 16);
+                    int col = Convert.ToInt32(newKey[j, 0][1].ToString(), 16);
+                    newKey[j, 0] = SBOX[row, col];
+                }
+                
+            }
+
+            for (int i = 0; i < 4; i++) //row in key
+            {
+                int xor = Convert.ToInt32(key[i, 0], 16) ^ Convert.ToInt32(newKey[i, 0], 16) ^ Convert.ToInt32(rCon[i, roundNum], 16);
+                newKey[i, 0] = xor.ToString("X");
+            }
+            for(int i = 1; i < 4; i++)
+            {
+                for(int j = 0; j < 4; j++)
+                {
+                    int xor = Convert.ToInt32(newKey[j, i - 1], 16) ^ Convert.ToInt32(key[j, i], 16);
+                    newKey[j, i] = xor.ToString("X");
+                }
+            }
+            return newKey;
+        }
 
         public override string Decrypt(string cipherText, string key)
         {
@@ -108,7 +145,10 @@ namespace SecurityLibrary.AES
                 plainText_Matrix = SubBytes(plainText_Matrix);
                 plainText_Matrix = ShiftRow(plainText_Matrix, "enc");
                 //maxx col
+                plainText_Matrix = mixColumns(plainText_Matrix);
                 //round key
+                key_Matrix = roundKey(key_Matrix, i);
+
                 plainText_Matrix = XOR(plainText_Matrix, key_Matrix);
 
                 i++;
@@ -116,9 +156,23 @@ namespace SecurityLibrary.AES
             plainText_Matrix = SubBytes(plainText_Matrix);
             plainText_Matrix = ShiftRow(plainText_Matrix, "enc");
             //round key
-            plainText_Matrix = XOR(plainText_Matrix, key_Matrix);
-            return plainText_Matrix.ToString();
+            key_Matrix = roundKey(key_Matrix, 9);
 
+            plainText_Matrix = XOR(plainText_Matrix, key_Matrix);
+            string result = matrixToString(plainText_Matrix);
+            return result;
+        }
+        private string matrixToString(string[,] matrix)
+        {
+            string result = "0x";
+            for(int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    result += matrix[j, i];
+                }
+            }
+            return result;
         }
         public string[,] Convert_To_Matrix(string str)
         {
@@ -139,7 +193,6 @@ namespace SecurityLibrary.AES
                 }
             }
             return Matrix;
-
         }
 
   
@@ -169,7 +222,6 @@ namespace SecurityLibrary.AES
             for (int i = 0; i < Matrix.GetLength(0); i++)
             {
                 for (int j = 0; j < Matrix.GetLength(1); j++)
-
                 {
                     int row = Convert.ToInt32(str[i, j][0].ToString(), 16);
                     int col = Convert.ToInt32(str[i, j][1].ToString(), 16);
