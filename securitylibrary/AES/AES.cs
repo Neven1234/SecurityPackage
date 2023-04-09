@@ -37,13 +37,58 @@ namespace SecurityLibrary.AES
                                                        {"01", "01", "02", "03"},
                                                        {"03", "01", "01", "02"}};
 
+        string[,] invMixColumnMatrix = new string[4, 4] {{"0e", "0b", "0d", "09"},
+                                                         {"09", "0e", "0b", "0d"},
+                                                         {"0d", "09", "0e", "0b"},
+                                                         {"0b", "0d", "09", "0e"},};
 
         string[,] rCon = new string[,] { {"01", "02", "04", "08", "10", "20", "40", "80", "1b", "36"},
                                          {"00", "00", "00", "00", "00", "00", "00", "00", "00", "00"},
                                          {"00", "00", "00", "00", "00", "00", "00", "00", "00", "00"},
                                          {"00", "00", "00", "00", "00", "00", "00", "00", "00", "00"},};
 
-        private string[,] mixColumns(string[,] matrix)
+        //i'm just testing something by this matix, i'm gonna delete it later
+        string[,] test = new string[4, 4] { {"87", "f2", "4d", "97"},
+                                            {"6e", "02", "03", "01"},
+                                            {"46", "01", "02", "03"},
+                                            {"a6", "01", "01", "02"}};
+
+        private string PolynomialArithmeticOverGF(string hexa, string mixColumnElement)
+        {
+            int deci;
+            int xor = -1;
+            List<string> result = new List<string>();
+            result.Add(hexa);
+            for(int i = 0; i < 7; i++)
+            {
+                deci = Convert.ToInt32(hexa, 16) << 1;
+                hexa = deci.ToString("X");
+                if (hexa.Length >= 3)//hexa[0] == '1' &&
+                {
+                    hexa = hexa.Remove(0, 1);
+                    deci = Convert.ToInt32(hexa, 16) ^ Convert.ToInt32("1b", 16);
+                    hexa = deci.ToString("X");
+                }
+                result.Add(hexa);   
+            }
+            string binary = Convert.ToString(Convert.ToInt32(mixColumnElement, 16), 2); // convert to binary
+            for(int i = 0; i < binary.Length; i++)
+            {
+                if(binary[binary.Length -1 -i] == '1')
+                {
+                    if(xor == -1)
+                    {
+                        xor = Convert.ToInt32(result[i], 16);
+                    }
+                    else
+                    {
+                        xor = xor ^ Convert.ToInt32(result[i], 16);
+                    }
+                }
+            }
+            return xor.ToString("X");
+        }
+        private string[,] mixColumns(string[,] matrix, string[,] mixColumnMatrix)
         {
             string[,] mixedMatrix = new string[4, 4];
             int res = 0;
@@ -55,23 +100,7 @@ namespace SecurityLibrary.AES
                 {
                     for (int k = 0; k < 4; k++) // index of element in column plane and row mixed
                     {
-                        hexa = matrix[k, i];
-                        if (Convert.ToInt32(mixColumnMatrix[j, k], 16) >= 2)
-                        {
-                            int shifted = Convert.ToInt32(matrix[k, i], 16) << 1; //270
-                            hexa = shifted.ToString("X");//10e
-                            if (hexa[0] == '1' && hexa.Length >= 3)
-                            {
-                                hexa = hexa.Remove(0, 1);
-                                xor = Convert.ToInt32(hexa, 16) ^ Convert.ToInt32("1b", 16); //21(xor)
-                                hexa = xor.ToString("X");//15
-                            }
-                            if (Convert.ToInt32(mixColumnMatrix[j, k], 16) == 3)
-                            {
-                                xor = Convert.ToInt32(hexa, 16) ^ Convert.ToInt32(matrix[k, i], 16);
-                                hexa = xor.ToString("X");
-                            }
-                        }
+                        hexa = PolynomialArithmeticOverGF(matrix[k, i], mixColumnMatrix[j, k]);
                         if (res == 0)
                         {
                             res = Convert.ToInt32(hexa, 16);
@@ -159,7 +188,7 @@ namespace SecurityLibrary.AES
                 plainText_Matrix = SubBytes(plainText_Matrix,"enc");
                 plainText_Matrix = ShiftRow(plainText_Matrix, "enc");
                 //maxx col
-                plainText_Matrix = mixColumns(plainText_Matrix);
+                plainText_Matrix = mixColumns(plainText_Matrix, mixColumnMatrix);
                 //round key
                 key_Matrix = roundKey(key_Matrix, i);
 
@@ -304,4 +333,6 @@ namespace SecurityLibrary.AES
         }
     }
 }
+
+
 
