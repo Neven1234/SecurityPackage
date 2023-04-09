@@ -314,7 +314,7 @@ namespace SecurityLibrary.AES
                 for (int j = 0; j < Matrix.GetLength(1);j++)
                 {
                     int t = (j + counter) % 4;
-                        Matrix[i, j] = str[i, t];
+                    Matrix[i, j] = str[i, t];
 
                     
                 }
