@@ -92,7 +92,6 @@ namespace SecurityLibrary.AES
         {
             string[,] mixedMatrix = new string[4, 4];
             int res = 0;
-            int xor;
             string hexa;
             for (int i = 0; i < 4; i++) //column in plane
             {
@@ -110,7 +109,8 @@ namespace SecurityLibrary.AES
                             res = res ^ Convert.ToInt32(hexa, 16);
                         }
                     }
-                    mixedMatrix[j, i] = res.ToString("X");
+                    mixedMatrix[j, i] = res.ToString("X").PadLeft(2, '0');
+                    
                     res = 0;
                 }
             }
@@ -128,22 +128,15 @@ namespace SecurityLibrary.AES
 
             for (int j = 0; j < 4; j++)
             {
-                if(newKey[j, 0].Length < 2)
-                {
-                    newKey[j, 0] = SBOX[0, Convert.ToInt32(newKey[j, 0][0].ToString(), 16)];
-                }
-                else
-                {
-                    int row = Convert.ToInt32(newKey[j, 0][0].ToString(), 16);
-                    int col = Convert.ToInt32(newKey[j, 0][1].ToString(), 16);
-                    newKey[j, 0] = SBOX[row, col];
-                }
-                
+                int row = Convert.ToInt32(newKey[j, 0].PadLeft(2, '0')[0].ToString(), 16);
+                int col = Convert.ToInt32(newKey[j, 0].PadLeft(2, '0')[1].ToString(), 16);
+                newKey[j, 0] = SBOX[row, col];
             }
 
             for (int i = 0; i < 4; i++) //row in key
             {
-                int xor = Convert.ToInt32(key[i, 0], 16) ^ Convert.ToInt32(newKey[i, 0], 16) ^ Convert.ToInt32(rCon[i, roundNum], 16);
+                int xor = Convert.ToInt32(key[i, 0], 16) ^ Convert.ToInt32(newKey[i, 0], 16) ^
+                                                                            Convert.ToInt32(rCon[i, roundNum], 16);
                 newKey[i, 0] = xor.ToString("X");
             }
             for(int i = 1; i < 4; i++)
@@ -161,19 +154,31 @@ namespace SecurityLibrary.AES
         {
             string[,] cipherText_Matrix = Convert_To_Matrix(cipherText);
             string[,] key_Matrix = Convert_To_Matrix(key);
-            cipherText_Matrix = XOR(cipherText_Matrix, key_Matrix);
-            int i = 0;
-            while (i > 9)
+            List<string[,]> roundedKeys = new List<string[,]>();
+            roundedKeys.Add(key_Matrix);
+            for(int i = 0; i < 10; i++)
             {
-                cipherText_Matrix = ShiftRow(cipherText_Matrix, "dec");
-                cipherText_Matrix = SubBytes(cipherText_Matrix, "dec");
-                cipherText_Matrix = XOR(cipherText_Matrix, key_Matrix);
-
-                i++;
+                roundedKeys.Add(key_Matrix = roundKey(key_Matrix, i));
             }
+
+            cipherText_Matrix = XOR(cipherText_Matrix, roundedKeys[10]);
+            int j = 9;
+            while (j > 0)
+            {
+                cipherText_Matrix = ShiftRow(cipherText_Matrix, "dec");// add zero to the left <<<<<<<<<<<<<<-----
+                cipherText_Matrix = SubBytes(cipherText_Matrix, "dec");// add zero to the left <<<<<<<<<<<<<<-----
+                key_Matrix = roundedKeys[j];
+                cipherText_Matrix = XOR(cipherText_Matrix, key_Matrix);
+                cipherText_Matrix = mixColumns(cipherText_Matrix, invMixColumnMatrix);
+
+                j--;
+            }   
             cipherText_Matrix = ShiftRow(cipherText_Matrix, "dec");
             cipherText_Matrix = SubBytes(cipherText_Matrix, "dec");
-            return cipherText_Matrix.ToString();
+            key_Matrix = roundedKeys[0];
+            cipherText_Matrix = XOR(cipherText_Matrix, key_Matrix);
+            string result = matrixToString(cipherText_Matrix);
+            return result;
         }
 
         public override string Encrypt(string plainText, string key)
@@ -182,15 +187,23 @@ namespace SecurityLibrary.AES
             string[,] plainText_Matrix = Convert_To_Matrix(plainText);
             string[,] key_Matrix = Convert_To_Matrix(key);
             plainText_Matrix = XOR(plainText_Matrix, key_Matrix);
+            List<string[,]> roundedKeys = new List<string[,]>();
+
+            for (int j = 0; j < 10; j++)
+            {
+                roundedKeys.Add(key_Matrix = roundKey(key_Matrix, j));
+            }
             int i = 0;
-            while(i<9)
+            while(i < 9)
             {
                 plainText_Matrix = SubBytes(plainText_Matrix,"enc");
                 plainText_Matrix = ShiftRow(plainText_Matrix, "enc");
                 //maxx col
                 plainText_Matrix = mixColumns(plainText_Matrix, mixColumnMatrix);
                 //round key
-                key_Matrix = roundKey(key_Matrix, i);
+                //key_Matrix = roundKey(key_Matrix, i);
+                key_Matrix = roundedKeys[i];
+
 
                 plainText_Matrix = XOR(plainText_Matrix, key_Matrix);
 
@@ -199,7 +212,8 @@ namespace SecurityLibrary.AES
             plainText_Matrix = SubBytes(plainText_Matrix,"enc");
             plainText_Matrix = ShiftRow(plainText_Matrix, "enc");
             //round key
-            key_Matrix = roundKey(key_Matrix, 9);
+            //key_Matrix = roundKey(key_Matrix, 9);
+            key_Matrix = roundedKeys[9];
 
             plainText_Matrix = XOR(plainText_Matrix, key_Matrix);
             string result = matrixToString(plainText_Matrix);
