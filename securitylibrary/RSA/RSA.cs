@@ -31,18 +31,24 @@ namespace SecurityLibrary.RSA
                     return b2;
                 }
                 q = a3 / b3;
-                t1 = a1 - q * b1;   t2 = a2 - q * b2;  t3 = a3 - q * b3;
+                t1 = a1 - q * b1;     t2 = a2 - q * b2;    t3 = a3 - q * b3;
 
-                a1 = b1;  a2 = b2;  a3 = b3;
+                a1 = b1;    a2 = b2;    a3 = b3;
 
-                b1 = t1;  b2 = t2; b3 = t3;
+                b1 = t1;    b2 = t2;    b3 = t3;
             }
         }
-        private int mod(int x1, int x2)
+
+        private int pow_mod(int M, int c, int  e, int n)
         {
-            if (x1 < 0)
-                return ((x1 % x2) + x2) % x2;
-            return x1 % x2;
+            if(e == 1)
+            {
+                return c % n;
+            }
+            e--;
+            c = (c * M) % n;
+            
+            return pow_mod(M, c, e, n);
         }
 
         public int Encrypt(int p, int q, int M, int e)
@@ -53,16 +59,44 @@ namespace SecurityLibrary.RSA
             {
                 return -1;
             }
-            double c = Math.Pow(M, e) % n;
-            return (int) c;
+            int re = M % n;
+            re = pow_mod(M, re, e, n);
+            return re;
             //throw new NotImplementedException();
         }
 
+        int calculateMultiplicativeInverse(int det, int mod)
+        {
+            double c = 0;
+            double x = 1;
+            int b;
+            while (true)
+            {
+                if (Math.Ceiling(x / (mod - det)) == Math.Floor(x / (mod - det)))//integer
+                {
+                    c = (x / (mod - det));
+                    break;
+                }
+                x += mod;
+            }
+            b = Convert.ToInt32(mod - c);
+            return b;
+        }
+
+
         public int Decrypt(int p, int q, int C, int e)
         {
-            //int d = euclideanAlgorithm(e, q_n);
-
-            throw new NotImplementedException();
+            int n = q * p;
+            int q_n = (q - 1) * (p - 1);
+            int d = calculateMultiplicativeInverse(e, q_n);
+            if (e > q_n || GCD(e, q_n) != 1)
+            {
+                return -1;
+            }
+            int re = C % n;
+            re = pow_mod(C, re, d, n);
+            return re;
+            //throw new NotImplementedException();
         }
     }
 }
