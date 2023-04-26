@@ -59,9 +59,31 @@ namespace SecurityLibrary.ElGamal
             return C;
             //throw new NotImplementedException();
         }
+
+        int calculateMultiplicativeInverse(int baseVal, int mod)
+        {
+            double c = 0;
+            double x = 1;
+            int b;
+            while (true)
+            {
+                if (Math.Ceiling(x / (mod - baseVal)) == Math.Floor(x / (mod - baseVal)))//integer
+                {
+                    c = (x / (mod - baseVal));
+                    break;
+                }
+                x += mod;
+            }
+            b = Convert.ToInt32(mod - c);
+            return b;
+        }
         public int Decrypt(int c1, int c2, int x, int q)
         {
-            throw new NotImplementedException();
+            int k = ModularPower(c1, x, q);
+            int k_1 = calculateMultiplicativeInverse(k, q);
+            int m = (c2 * k_1) % q;
+            return m;
+            //throw new NotImplementedException();
 
         }
     }

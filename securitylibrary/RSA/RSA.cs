@@ -65,16 +65,16 @@ namespace SecurityLibrary.RSA
             //throw new NotImplementedException();
         }
 
-        int calculateMultiplicativeInverse(int det, int mod)
+        int calculateMultiplicativeInverse(int baseVale, int mod)
         {
             double c = 0;
             double x = 1;
             int b;
             while (true)
             {
-                if (Math.Ceiling(x / (mod - det)) == Math.Floor(x / (mod - det)))//integer
+                if (Math.Ceiling(x / (mod - baseVale)) == Math.Floor(x / (mod - baseVale)))//integer
                 {
-                    c = (x / (mod - det));
+                    c = (x / (mod - baseVale));
                     break;
                 }
                 x += mod;
