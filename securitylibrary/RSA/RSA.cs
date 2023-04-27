@@ -39,7 +39,7 @@ namespace SecurityLibrary.RSA
             }
         }
 
-        private int pow_mod(int M, int c, int  e, int n)
+        /*private int pow_mod(int M, int c, int  e, int n)
         {
             if(e == 1)
             {
@@ -49,6 +49,12 @@ namespace SecurityLibrary.RSA
             c = (c * M) % n;
             
             return pow_mod(M, c, e, n);
+        }*/
+
+        private int pow_mod(int M, int c, int n)
+        {
+            c = (c * M) % n;
+            return c;
         }
 
         public int Encrypt(int p, int q, int M, int e)
@@ -60,7 +66,11 @@ namespace SecurityLibrary.RSA
                 return -1;
             }
             int re = M % n;
-            re = pow_mod(M, re, e, n);
+            for (int i = 1; i < e; i++)
+            {
+                re = pow_mod(M, re, n);
+            }
+            
             return re;
             //throw new NotImplementedException();
         }
@@ -94,7 +104,12 @@ namespace SecurityLibrary.RSA
                 return -1;
             }
             int re = C % n;
-            re = pow_mod(C, re, d, n);
+            for (int i = 1; i < d; i++)
+            {
+               re = pow_mod(C, re, n);
+
+            }
+
             return re;
             //throw new NotImplementedException();
         }
