@@ -40,12 +40,12 @@ namespace SecurityLibrary.MD5
                 {
                     int invbyte = (int)message[index] << 24;
 
-                    Block_Message[j / 4] = invbyte | ((int)((uint)Block_Message[j / 4]>>8));//>>8 == /256
+                    Block_Message[j / 4] = invbyte | ((int)((uint)Block_Message[j / 4]/256));//>>8 == /256
                 }
                 else
                 {
                     int invbyte = (int)paddingBytes[index - messLenBytes] << 24;
-                    Block_Message[j / 4] = invbyte | ((int)((uint)Block_Message[j / 4] >>8));
+                    Block_Message[j / 4] = invbyte | ((int)((uint)Block_Message[j / 4] /256));
                 }
                 index++;
             }
@@ -65,7 +65,7 @@ namespace SecurityLibrary.MD5
             {
                 paddingBytes[paddingBytes.Length - 8 + i] = (byte)messageLenBits;
 
-                messageLenBits = messageLenBits >> 8;
+                messageLenBits = messageLenBits / 256;//>>8
             }
             return paddingBytes;
         }
@@ -176,7 +176,7 @@ namespace SecurityLibrary.MD5
                 {
                     MD5[count] = (byte)n;
                     count++;
-                    n = (int)((uint)n>>8);
+                    n = (int)((uint)n/256);
                 }
                 k++;
             }
