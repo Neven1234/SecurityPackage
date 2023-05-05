@@ -164,11 +164,8 @@ namespace SecurityLibrary.MD5
             int count = 0;
             int k = 0;
             int m = 0;
-            MD5[0] =(byte) a;
-            MD5[1] = (byte)b;
-            MD5[2]= (byte)c;
-            MD5[3]= (byte)d;
-            /*while (k<4)
+            
+            while (k<4)
             {
                 int n = 0;
                 if      (k == 0) { n = (int)a; }
@@ -182,7 +179,7 @@ namespace SecurityLibrary.MD5
                     n = (int)((uint)n>>8);
                 }
                 k++;
-            }*/
+            }
               return BitConverter.ToString(MD5).Replace("-", "");
         }
     }
